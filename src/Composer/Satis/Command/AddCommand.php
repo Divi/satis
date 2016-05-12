@@ -16,6 +16,7 @@ use Composer\IO\NullIO;
 use Composer\Repository\VcsRepository;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Composer\Command\BaseCommand;
@@ -34,10 +35,11 @@ class AddCommand extends BaseCommand
             ->setDescription('Add repository URL to satis JSON file')
             ->setDefinition(array(
                 new InputArgument('url',  InputArgument::REQUIRED, 'VCS repository URL'),
-                new InputArgument('file', InputArgument::OPTIONAL, 'JSON file to use', './satis.json')
+                new InputArgument('file', InputArgument::OPTIONAL, 'JSON file to use', './satis.json'),
+                new InputOption('project', 'p', InputOption::VALUE_NONE, 'Flag the VCS URL as a project URL')
             ))
             ->setHelp(<<<EOT
-The <info>add</info> command adds given repository URL to the json file
+The <info>add</info> command adds given repository or project URL to the json file
 (satis.json is used by default). You will need to run <comment>build</comment> command to
 fetch updates from repository.
 EOT
@@ -86,10 +88,15 @@ EOT
             }
         }
 
-        $config['repositories'][] = array('type' => 'vcs', 'url'  => $repositoryUrl);
+        $keyName = 'repositories';
+
+        if ($input->getOption('project')) {
+            $keyName = 'projects';
+        }
+
+        $config[$keyName][] = array('type' => 'vcs', 'url'  => $repositoryUrl);
 
         $file->write($config);
-
 
         $output->writeln(array(
             '',
